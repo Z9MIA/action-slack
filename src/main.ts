@@ -1,5 +1,12 @@
 import * as core from '@actions/core';
-import { Client, Success, Failure, Cancelled, Custom } from './client';
+import {
+  Client,
+  Success,
+  Failure,
+  Cancelled,
+  Custom,
+  ReportIssue,
+} from './client';
 
 async function run(): Promise<void> {
   try {
@@ -18,6 +25,7 @@ async function run(): Promise<void> {
     const job_name = core.getInput('job_name');
     const github_token = core.getInput('github_token');
     const github_base_url = core.getInput('github_base_url');
+    const issues = core.getInput('issues');
 
     core.debug(`status: ${status}`);
     core.debug(`mention: ${mention}`);
@@ -33,6 +41,7 @@ async function run(): Promise<void> {
     core.debug(`fields: ${fields}`);
     core.debug(`job_name: ${job_name}`);
     core.debug(`github_base_url: ${github_base_url}`);
+    core.debug(`issues: ${issues}`);
 
     const client = new Client(
       {
@@ -53,6 +62,11 @@ async function run(): Promise<void> {
     );
 
     switch (status) {
+      case ReportIssue:
+        if (issues) {
+          await client.send(await client.reportIssue(issues));
+        }
+        break;
       case Success:
       case Failure:
       case Cancelled:

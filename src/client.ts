@@ -8,7 +8,10 @@ import {
 } from '@slack/webhook';
 import { FieldFactory } from './fields';
 import { HttpsProxyAgent } from 'https-proxy-agent';
+import { Issue } from './issues';
 
+export const ReportIssue = 'report-issue';
+type ReportIssueType = 'report-issue';
 export const Success = 'success';
 type SuccessType = 'success';
 export const Failure = 'failure';
@@ -97,6 +100,40 @@ export class Client {
     var template: IncomingWebhookSendArguments = eval(`template = ${payload}`);
     /* eslint-enable */
     return template;
+  }
+
+  async reportIssue(issues: string) {
+    const parsedIssues: Issue[] = JSON.parse(issues);
+    var sections = '';
+    var milestone = '';
+
+    parsedIssues.forEach(issue => {
+      milestone = issue.milestone ? `[${issue.milestone}]` : '';
+      sections += `{
+        "type": "section",
+        "text": {
+          "type": "mrkdwn",
+          "text": "- <${process.env.AS_REPO}/issues/${issue.number}|${issue.title}> ${milestone}"
+        }
+      }`;
+    });
+
+    const example = {
+      blocks: [
+        {
+          type: 'header',
+          text: {
+            type: 'plain_text',
+            text: ':warning: Please check remain issues.',
+          },
+        },
+        sections,
+      ],
+    };
+
+    core.debug(`example: ${example}`);
+
+    return example;
   }
 
   async prepare(text: string) {
