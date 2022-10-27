@@ -119,28 +119,15 @@ export class Client {
     for (const [index, issue] of parsedIssues.entries()) {
       milestone = issue.milestone?.title ? `[${issue.milestone?.title}]` : '';
       const new_date = new Date(new Date(issue.created_at).getTime() + offset);
-      const dateFormat =
-        new_date.getFullYear() +
-        '년 ' +
-        (new_date.getMonth() + 1) +
-        '월 ' +
-        new_date.getDate() +
-        '일 ' +
-        new_date.getHours() +
-        '시 ' +
-        new_date.getMinutes() +
-        '분';
+      const dateFormat = `${new_date.getFullYear()}년 ${
+        new_date.getMonth() + 1
+      }월 ${new_date.getDate()}일 ${new_date.getHours()}시 ${new_date.getMinutes()}분`;
 
       fields += `
       {
         "title": "Issue",
         "value": "<${issue.html_url}|${issue.title}>",
         "short": false
-      },
-      {
-        "title": "Assignee",
-        "value": "${issue.assignee?.login ?? 'None'}",
-        "short": true
       },
       {
         "title": "CreatedAt",
