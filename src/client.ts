@@ -8,7 +8,6 @@ import {
 } from '@slack/webhook';
 import { FieldFactory } from './fields';
 import { HttpsProxyAgent } from 'https-proxy-agent';
-import { Issue } from './issues';
 
 export const ReportIssue = 'report-issue';
 export const Success = 'success';
@@ -101,13 +100,13 @@ export class Client {
     return template;
   }
 
-  async reportIssue(issues: string) {
+  async reportIssue() {
     await this.fieldFactory.attachments();
 
-    const parsedIssues: Issue[] = JSON.parse(issues);
+    const parsedIssues = await this.fieldFactory.issues();
+
     let milestone = '';
     let sections = '';
-    const repo = process.env.AS_REPO?.replace('<', '')?.replace('>', '');
 
     for (const [index, issue] of parsedIssues.entries()) {
       milestone = issue.milestone?.title ? `[${issue.milestone?.title}]` : '';
@@ -115,7 +114,7 @@ export class Client {
         "type": "section",
         "text": {
           "type": "mrkdwn",
-          "text": "- <${repo}/issues/${issue.number}|${issue.title}> ${milestone}"
+          "text": "- <${issue.url}|${issue.title}> ${milestone}"
         }
       }`;
       if (index + 1 < parsedIssues.length) {

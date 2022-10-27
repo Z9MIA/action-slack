@@ -1,8 +1,10 @@
 export interface Issue {
-  number: number;
   title: string;
-  milestone?: {
+  url: string;
+  state: string;
+  milestone: {
     title: string;
+    url: string;
   };
-  created?: string;
+  created_at: Date;
 }

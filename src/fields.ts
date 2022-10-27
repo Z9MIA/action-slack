@@ -1,5 +1,6 @@
 import { context } from '@actions/github';
 import { Octokit } from './client';
+import { Issue } from './issues';
 
 export interface Field {
   title: string;
@@ -183,6 +184,16 @@ export class FieldFactory {
     }/${owner}/${repo}/commit/${sha}|${sha.slice(0, 8)}>`;
     process.env.AS_COMMIT = value;
     return value;
+  }
+
+  async issues(): Promise<Issue[]> {
+    const { owner, repo } = context.repo;
+
+    const result = await this.octokit.rest.issues.listForRepo({ owner, repo });
+
+    console.log(`issues: ${JSON.stringify(result)}`);
+
+    return result as unknown as Issue[];
   }
 
   private async repo(): Promise<string> {
