@@ -9,6 +9,7 @@ import {
 import { FieldFactory } from './fields';
 import { HttpsProxyAgent } from 'https-proxy-agent';
 
+export const ReportIssue = 'report-issue';
 export const Success = 'success';
 type SuccessType = 'success';
 export const Failure = 'failure';
@@ -18,6 +19,7 @@ type CancelledType = 'cancelled';
 export const Custom = 'custom';
 export const Always = 'always';
 type AlwaysType = 'always';
+const offset = 1000 * 60 * 60 * 9;
 
 export type Octokit = InstanceType<typeof GitHub>;
 
@@ -99,6 +101,109 @@ export class Client {
     return template;
   }
 
+  async reportIssue(
+    milestoneName: string | undefined,
+  ): Promise<IncomingWebhookSendArguments | undefined> {
+    await this.fieldFactory.attachments();
+
+    const parsedIssues = await this.fieldFactory.issues(milestoneName);
+    core.setOutput('issues', parsedIssues);
+
+    if (!parsedIssues || parsedIssues.length == 0) {
+      return undefined;
+    }
+
+    let milestone = '';
+    let fields = '';
+
+    for (const [index, issue] of parsedIssues.entries()) {
+      milestone = issue.milestone?.title ? `[${issue.milestone?.title}]` : '';
+      const new_date = new Date(new Date(issue.created_at).getTime() + offset);
+      const dateFormat = `${new_date.getFullYear()}년 ${
+        new_date.getMonth() + 1
+      }월 ${new_date.getDate()}일 ${new_date.getHours()}시 ${new_date.getMinutes()}분`;
+
+      fields += `
+      {
+        "title": "Issue",
+        "value": "<${issue.html_url}|${issue.title}>",
+        "short": false
+      },
+      {
+        "title": "CreatedAt",
+        "value": "${dateFormat}",
+        "short": true
+      }`;
+
+      if (!milestoneName) {
+        fields += `,
+        {
+          "title": "Milestone",
+          "value": "${issue.milestone?.title ?? 'None'}",
+          "short": true
+        }
+        `;
+      }
+
+      if (index + 1 < parsedIssues.length) {
+        fields += `,`;
+      }
+    }
+
+    console.log(`workflow: `, context.workflow);
+
+    const emoji = context.workflow?.toLowerCase().startsWith('settag')
+      ? ':no_entry:'
+      : ':warning:';
+    const color = context.workflow?.toLowerCase().startsWith('settag')
+      ? 'danger'
+      : 'warning';
+    const issueLink = await this.fieldFactory.issueLink();
+    const milestoneInput = milestoneName
+      ? `\\n *Milestone*: ${milestoneName}`
+      : '';
+
+    const result = `{
+      "blocks": [
+        {
+          "type": "section",
+          "text": {
+            "type": "mrkdwn",
+            "text": "${emoji} *${process.env.AS_REPO} has some open issues*"
+          }
+        },
+        {
+          "type": "section",
+          "text": {
+            "type": "mrkdwn",
+            "text": "*Workflow*: ${process.env.AS_WORKFLOW}\\n*Open issue*: <${issueLink}|Total ${parsedIssues.length}>${milestoneInput}\\n\\n*Please check issues:*"
+          }
+        },
+        {
+          "type": "divider"
+        }
+      ],
+      "attachments": [
+        {
+          "mrkdwn_in": ["text"],
+          "color": "${color}",
+          "fields": [
+            ${fields}
+          ],
+          "footer": "@${process.env.AS_REF}",
+          "footer_icon": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png"
+        }
+      ]
+    }`;
+
+    core.debug(`example: ${result}`);
+    console.log(`result: ${result}`);
+
+    const template: IncomingWebhookSendArguments = JSON.parse(result);
+
+    return template;
+  }
+
   async prepare(text: string) {
     const template = await this.payloadTemplate();
     template.text = this.injectText(text);
@@ -106,9 +211,16 @@ export class Client {
     return template;
   }
 
-  async send(payload: string | IncomingWebhookSendArguments) {
+  async send(payload: string | IncomingWebhookSendArguments | undefined) {
+    if (!payload) {
+      console.warn('cannot send payload is empty');
+      return;
+    }
     core.debug(JSON.stringify(context, null, 2));
+    core.debug('send');
+    core.debug(JSON.stringify(payload));
     await this.webhook.send(payload);
+    console.log('send message');
     core.debug('send message');
   }
 

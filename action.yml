@@ -2,6 +2,12 @@ name: action-slack
 description: You can notify slack of GitHub Actions.
 author: 8398a7
 inputs:
+  milestone:
+    description: Target milestone
+    required: false
+  issues:
+    description: Issue list 
+    required: false
   status:
     description: Specify success or failure or cancelled or custom.
     required: true
@@ -66,6 +72,10 @@ inputs:
     description: Specify if you want to use GitHub Enterprise.
     default: ""
     required: false
+
+outputs:
+  issues:
+    description: 'Find issues'
 runs:
   using: node16
   main: dist/index.js

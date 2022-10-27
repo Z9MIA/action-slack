@@ -1,5 +1,6 @@
 import { context } from '@actions/github';
 import { Octokit } from './client';
+import { Issue } from './issues';
 
 export interface Field {
   title: string;
@@ -185,6 +186,55 @@ export class FieldFactory {
     return value;
   }
 
+  async issues(
+    milestoneName: string | undefined,
+  ): Promise<Issue[] | undefined> {
+    const { owner, repo } = context.repo;
+
+    const result = await this.octokit.rest.issues.listForRepo({
+      owner,
+      repo,
+      state: 'open',
+    });
+
+    console.log(`issues status: ${result.status}`);
+
+    if (result.status === 200) {
+      const issues: Issue[] = result.data.map(
+        issue =>
+          new Issue(
+            issue.title,
+            issue.node_id,
+            issue.html_url,
+            issue.state,
+            issue.created_at,
+            issue.assignee
+              ? {
+                  login: issue.assignee.login,
+                }
+              : undefined,
+            issue.milestone
+              ? {
+                  title: issue.milestone.title,
+                  url: issue.milestone.url,
+                  html_url: issue.milestone.html_url,
+                }
+              : undefined,
+          ),
+      );
+      if (milestoneName) {
+        return issues.filter(
+          issue =>
+            issue.milestone?.title === milestoneName &&
+            issue.node_id.startsWith('I_'),
+        );
+      }
+      return issues.filter(issue => issue.node_id.startsWith('I_'));
+    }
+
+    return undefined;
+  }
+
   private async repo(): Promise<string> {
     const { owner, repo } = context.repo;
 
@@ -211,6 +261,13 @@ export class FieldFactory {
 
     const value = `<${this.gitHubBaseUrl}/${owner}/${repo}/commit/${sha}/checks|${context.workflow}>`;
     process.env.AS_WORKFLOW = value;
+    return value;
+  }
+
+  async issueLink(): Promise<string> {
+    const { owner, repo } = context.repo;
+
+    const value = `${this.gitHubBaseUrl}/${owner}/${repo}/issues`;
     return value;
   }
 
