@@ -239,6 +239,13 @@ export class FieldFactory {
     return value;
   }
 
+  async issueLink(): Promise<string> {
+    const { owner, repo } = context.repo;
+
+    const value = `${this.gitHubBaseUrl}/${owner}/${repo}/issues`;
+    return value;
+  }
+
   private async pullRequest(): Promise<string> {
     let value;
     if (context.eventName.startsWith('pull_request')) {

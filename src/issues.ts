@@ -8,6 +8,7 @@ export interface Issue {
   milestone?: {
     title: string;
     url: string;
+    html_url: string;
   };
   created_at: string;
 }

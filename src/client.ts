@@ -114,7 +114,7 @@ export class Client {
     }
 
     let milestone = '';
-    let sections = '';
+    let fields = '';
 
     for (const [index, issue] of parsedIssues.entries()) {
       milestone = issue.milestone?.title ? `[${issue.milestone?.title}]` : '';
@@ -130,84 +130,81 @@ export class Client {
         '시 ' +
         new_date.getMinutes() +
         '분';
-      sections += `{
-          "type": "section",
-          "fields": [
-            {
-              "type": "mrkdwn",
-              "text": "*Issue*"
-            },
-            {
-              "type": "mrkdwn",
-              "text": "*Assignee*"
-            },
-            {
-              "type": "mrkdwn",
-              "text": "<${issue.html_url}|${issue.title}>"
-            },
-            {
-              "type": "plain_text",
-              "text": "${issue.assignee?.login ?? ' '}"
-            }, 
-            {
-              "type": "mrkdwn",
-              "text": "*CreatedAt*"
-            },
-            {
-              "type": "mrkdwn",
-              "text": "*Milestone*"
-            },
-            {
-              "type": "plain_text",
-              "text": "${dateFormat}"
-            }, 
-            {
-              "type": "plain_text",
-              "text": "${issue.milestone?.title ?? ' '}"
-            }
-          ]
-        }`;
-      if (index + 1 < parsedIssues.length) {
-        sections += `,
+
+      fields += `
+      {
+        "title": "Issue",
+        "value": "<${issue.html_url}|${issue.title}>",
+        "short": false
+      },
+      {
+        "title": "Assignee",
+        "value": "${issue.assignee?.login ?? ' '}",
+        "short": true
+      },
+      {
+        "title": "CreatedAt",
+        "value": "${dateFormat}",
+        "short": true
+      }`;
+
+      if (!milestoneName) {
+        fields += `,
         {
-          "type": "divider"
-        },
+          "title": "Milestone",
+          "value": "${issue.milestone?.title ?? ' '}",
+          "short": true
+        }
         `;
       }
+
+      if (index + 1 < parsedIssues.length) {
+        fields += `,`;
+      }
     }
+
+    console.log(`workflow: `, context.workflow);
+
+    const emoji = context.workflow?.toLowerCase().startsWith('settag')
+      ? ':no_entry:'
+      : ':warning:';
+    const color = context.workflow?.toLowerCase().startsWith('settag')
+      ? 'danger'
+      : 'warning';
+    const issueLink = await this.fieldFactory.issueLink();
+    const milestoneInput = milestoneName
+      ? `\\n *Milestone*: ${milestoneName}`
+      : '';
 
     const result = `{
       "blocks": [
         {
-          "type": "header",
+          "type": "section",
           "text": {
-            "type": "plain_text",
-            "text": ":warning: Please check remain issues."
+            "type": "mrkdwn",
+            "text": "${emoji} *${process.env.AS_REPO} has some open issues*"
           }
         },
         {
-          "type": "context",
-          "elements": [
-            {
-              "type": "mrkdwn",
-              "text": "Repository: ${process.env.AS_REPO}\nWorkflow: ${process.env.AS_WORKFLOW}"
-            }
-          ]
+          "type": "section",
+          "text": {
+            "type": "mrkdwn",
+            "text": "*Workflow*: ${process.env.AS_WORKFLOW}\\n*Open issue*: <${issueLink}|Total ${parsedIssues.length}>${milestoneInput}\\n\\n*Please check issues:*"
+          }
         },
-        ${sections},
         {
-          "type": "context",
-          "elements": [
-            {
-              "type": "image",
-              "image_url": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
-              "alt_text": "github"
-            },
-            {
-              "type": "mrkdwn",
-              "text": "@${process.env.AS_REF}"
-            }
-          ]
+          "type": "divider"
+        }
+      ],
+      "attachments": [
+        {
+          "mrkdwn_in": ["text"],
+          "color": "${color}",
+          "fields": [
+            ${fields}
+          ],
+          "footer": "@${process.env.AS_REF}",
+          "footer_icon": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png"
         }
       ]
     }`;
