@@ -182,7 +182,30 @@ export class Client {
             "text": ":warning: Please check remain issues."
           }
         },
-        ${sections}
+        {
+          "type": "context",
+          "elements": [
+            {
+              "type": "mrkdwn",
+              "text": "Repository: ${process.env.AS_REPO}"
+            }
+          ]
+        },
+        ${sections},
+        {
+          "type": "context",
+          "elements": [
+            {
+              "type": "image",
+              "image_url": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
+              "alt_text": "github"
+            },
+            {
+              "type": "mrkdwn",
+              "text": "@${process.env.AS_REF}"
+            }
+          ]
+        }
       ]
     }`;
 
