@@ -1,5 +1,8 @@
 export interface Issue {
   number: number;
   title: string;
-  milestone?: string;
+  milestone?: {
+    title: string;
+  };
+  created?: string;
 }

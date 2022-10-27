@@ -11,7 +11,6 @@ import { HttpsProxyAgent } from 'https-proxy-agent';
 import { Issue } from './issues';
 
 export const ReportIssue = 'report-issue';
-type ReportIssueType = 'report-issue';
 export const Success = 'success';
 type SuccessType = 'success';
 export const Failure = 'failure';
@@ -104,11 +103,11 @@ export class Client {
 
   async reportIssue(issues: string) {
     const parsedIssues: Issue[] = JSON.parse(issues);
-    var sections = '';
-    var milestone = '';
+    let milestone = '';
+    let sections = '';
 
-    parsedIssues.forEach(issue => {
-      milestone = issue.milestone ? `[${issue.milestone}]` : '';
+    for (const issue of parsedIssues) {
+      milestone = issue.milestone?.title ? `[${issue.milestone?.title}]` : '';
       sections += `{
         "type": "section",
         "text": {
@@ -116,24 +115,24 @@ export class Client {
           "text": "- <${process.env.AS_REPO}/issues/${issue.number}|${issue.title}> ${milestone}"
         }
       }`;
-    });
+    }
 
-    const example = {
-      blocks: [
+    const result = `{
+      "blocks": [
         {
-          type: 'header',
-          text: {
-            type: 'plain_text',
-            text: ':warning: Please check remain issues.',
-          },
+          "type": "header",
+          "text": {
+            "type": "plain_text",
+            "text": ":warning: Please check remain issues."
+          }
         },
-        sections,
-      ],
-    };
+        ${sections}
+      ]
+    }`;
 
-    core.debug(`example: ${example}`);
+    core.debug(`example: ${result}`);
 
-    return example;
+    return result;
   }
 
   async prepare(text: string) {
