@@ -69,6 +69,10 @@ inputs:
     description: Specify if you want to use GitHub Enterprise.
     default: ""
     required: false
+
+outputs:
+  issues:
+    description: 'Find issues'
 runs:
   using: node16
   main: dist/index.js

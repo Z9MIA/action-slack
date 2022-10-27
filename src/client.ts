@@ -105,6 +105,7 @@ export class Client {
     await this.fieldFactory.attachments();
 
     const parsedIssues = await this.fieldFactory.issues();
+    core.setOutput('issues', parsedIssues);
 
     if (!parsedIssues) {
       return undefined;
