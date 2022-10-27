@@ -139,7 +139,7 @@ export class Client {
       },
       {
         "title": "Assignee",
-        "value": "${issue.assignee?.login ?? ' '}",
+        "value": "${issue.assignee?.login ?? 'None'}",
         "short": true
       },
       {
@@ -152,7 +152,7 @@ export class Client {
         fields += `,
         {
           "title": "Milestone",
-          "value": "${issue.milestone?.title ?? ' '}",
+          "value": "${issue.milestone?.title ?? 'None'}",
           "short": true
         }
         `;

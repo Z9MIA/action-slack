@@ -200,11 +200,36 @@ export class FieldFactory {
     console.log(`issues status: ${result.status}`);
 
     if (result.status === 200) {
-      const issues = result.data as unknown as Issue[];
+      const issues: Issue[] = result.data.map(
+        issue =>
+          new Issue(
+            issue.title,
+            issue.node_id,
+            issue.html_url,
+            issue.state,
+            issue.created_at,
+            issue.assignee
+              ? {
+                  login: issue.assignee.login,
+                }
+              : undefined,
+            issue.milestone
+              ? {
+                  title: issue.milestone.title,
+                  url: issue.milestone.url,
+                  html_url: issue.milestone.html_url,
+                }
+              : undefined,
+          ),
+      );
       if (milestoneName) {
-        return issues.filter(issue => issue.milestone?.title === milestoneName);
+        return issues.filter(
+          issue =>
+            issue.milestone?.title === milestoneName &&
+            issue.node_id.startsWith('I_'),
+        );
       }
-      return issues;
+      return issues.filter(issue => issue.node_id.startsWith('I_'));
     }
 
     return undefined;
