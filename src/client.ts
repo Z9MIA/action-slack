@@ -144,7 +144,7 @@ export class Client {
             },
             {
               "type": "plain_text",
-              "text": "${issue.assignee?.login ?? ''}"
+              "text": "${issue.assignee?.login ?? ' '}"
             }, 
             {
               "type": "mrkdwn",
@@ -160,7 +160,7 @@ export class Client {
             }, 
             {
               "type": "plain_text",
-              "text": "${issue.milestone?.title ?? ''}"
+              "text": "${issue.milestone?.title ?? ' '}"
             }
           ]
         }`;
