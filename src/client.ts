@@ -101,13 +101,15 @@ export class Client {
     return template;
   }
 
-  async reportIssue(): Promise<IncomingWebhookSendArguments | undefined> {
+  async reportIssue(
+    milestoneName: string | undefined,
+  ): Promise<IncomingWebhookSendArguments | undefined> {
     await this.fieldFactory.attachments();
 
-    const parsedIssues = await this.fieldFactory.issues();
+    const parsedIssues = await this.fieldFactory.issues(milestoneName);
     core.setOutput('issues', parsedIssues);
 
-    if (!parsedIssues) {
+    if (!parsedIssues || parsedIssues.length == 0) {
       return undefined;
     }
 
@@ -188,7 +190,7 @@ export class Client {
           "elements": [
             {
               "type": "mrkdwn",
-              "text": "Repository: ${process.env.AS_REPO}"
+              "text": "Repository: ${process.env.AS_REPO}\nWorkflow: ${process.env.AS_WORKFLOW}"
             }
           ]
         },

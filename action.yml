@@ -2,6 +2,9 @@ name: action-slack
 description: You can notify slack of GitHub Actions.
 author: 8398a7
 inputs:
+  milestone:
+    description: Target milestone
+    required: false
   issues:
     description: Issue list 
     required: false

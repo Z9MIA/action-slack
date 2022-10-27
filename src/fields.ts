@@ -186,15 +186,25 @@ export class FieldFactory {
     return value;
   }
 
-  async issues(): Promise<Issue[] | undefined> {
+  async issues(
+    milestoneName: string | undefined,
+  ): Promise<Issue[] | undefined> {
     const { owner, repo } = context.repo;
 
-    const result = await this.octokit.rest.issues.listForRepo({ owner, repo });
+    const result = await this.octokit.rest.issues.listForRepo({
+      owner,
+      repo,
+      state: 'open',
+    });
 
     console.log(`issues status: ${result.status}`);
 
     if (result.status === 200) {
-      return result.data as unknown as Issue[];
+      const issues = result.data as unknown as Issue[];
+      if (milestoneName) {
+        return issues.filter(issue => issue.milestone?.title === milestoneName);
+      }
+      return issues;
     }
 
     return undefined;

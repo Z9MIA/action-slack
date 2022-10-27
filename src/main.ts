@@ -25,6 +25,7 @@ async function run(): Promise<void> {
     const job_name = core.getInput('job_name');
     const github_token = core.getInput('github_token');
     const github_base_url = core.getInput('github_base_url');
+    const milestone = core.getInput('milestone');
 
     core.debug(`status: ${status}`);
     core.debug(`mention: ${mention}`);
@@ -40,6 +41,7 @@ async function run(): Promise<void> {
     core.debug(`fields: ${fields}`);
     core.debug(`job_name: ${job_name}`);
     core.debug(`github_base_url: ${github_base_url}`);
+    core.debug(`milestone: ${milestone}`);
 
     const client = new Client(
       {
@@ -61,7 +63,7 @@ async function run(): Promise<void> {
 
     switch (status) {
       case ReportIssue:
-        await client.send(await client.reportIssue());
+        await client.send(await client.reportIssue(milestone));
         break;
       case Success:
       case Failure:
