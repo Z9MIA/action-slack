@@ -186,14 +186,18 @@ export class FieldFactory {
     return value;
   }
 
-  async issues(): Promise<Issue[]> {
+  async issues(): Promise<Issue[] | undefined> {
     const { owner, repo } = context.repo;
 
     const result = await this.octokit.rest.issues.listForRepo({ owner, repo });
 
-    console.log(`issues: ${JSON.stringify(result)}`);
+    console.log(`issues status: ${result.status}`);
 
-    return result as unknown as Issue[];
+    if (result.status === 200) {
+      return result.data as unknown as Issue[];
+    }
+
+    return undefined;
   }
 
   private async repo(): Promise<string> {

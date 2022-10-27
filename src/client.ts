@@ -19,6 +19,7 @@ type CancelledType = 'cancelled';
 export const Custom = 'custom';
 export const Always = 'always';
 type AlwaysType = 'always';
+const offset = 1000 * 60 * 60 * 9;
 
 export type Octokit = InstanceType<typeof GitHub>;
 
@@ -100,25 +101,75 @@ export class Client {
     return template;
   }
 
-  async reportIssue() {
+  async reportIssue(): Promise<IncomingWebhookSendArguments | undefined> {
     await this.fieldFactory.attachments();
 
     const parsedIssues = await this.fieldFactory.issues();
+
+    if (!parsedIssues) {
+      return undefined;
+    }
 
     let milestone = '';
     let sections = '';
 
     for (const [index, issue] of parsedIssues.entries()) {
       milestone = issue.milestone?.title ? `[${issue.milestone?.title}]` : '';
+      const new_date = new Date(new Date(issue.created_at).getTime() + offset);
+      const dateFormat =
+        new_date.getFullYear() +
+        '년 ' +
+        (new_date.getMonth() + 1) +
+        '월 ' +
+        new_date.getDate() +
+        '일 ' +
+        new_date.getHours() +
+        '시 ' +
+        new_date.getMinutes() +
+        '분';
       sections += `{
-        "type": "section",
-        "text": {
-          "type": "mrkdwn",
-          "text": "- <${issue.url}|${issue.title}> ${milestone}"
-        }
-      }`;
+          "type": "section",
+          "fields": [
+            {
+              "type": "mrkdwn",
+              "text": "*Issue*"
+            },
+            {
+              "type": "mrkdwn",
+              "text": "*Assignee*"
+            },
+            {
+              "type": "mrkdwn",
+              "text": "<${issue.html_url}|${issue.title}>"
+            },
+            {
+              "type": "plain_text",
+              "text": "${issue.assignee?.login ?? ''}"
+            }, 
+            {
+              "type": "mrkdwn",
+              "text": "*CreatedAt*"
+            },
+            {
+              "type": "mrkdwn",
+              "text": "*Milestone*"
+            },
+            {
+              "type": "plain_text",
+              "text": "${dateFormat}"
+            }, 
+            {
+              "type": "plain_text",
+              "text": "${issue.milestone?.title ?? ''}"
+            }
+          ]
+        }`;
       if (index + 1 < parsedIssues.length) {
-        sections += ',';
+        sections += `,
+        {
+          "type": "divider"
+        },
+        `;
       }
     }
 
@@ -136,7 +187,7 @@ export class Client {
     }`;
 
     core.debug(`example: ${result}`);
-    console.debug(`example: ${result}`);
+    console.log(`result: ${result}`);
 
     const template: IncomingWebhookSendArguments = JSON.parse(result);
 
@@ -150,9 +201,16 @@ export class Client {
     return template;
   }
 
-  async send(payload: string | IncomingWebhookSendArguments) {
+  async send(payload: string | IncomingWebhookSendArguments | undefined) {
+    if (!payload) {
+      console.warn('cannot send payload is empty');
+      return;
+    }
     core.debug(JSON.stringify(context, null, 2));
+    core.debug('send');
+    core.debug(JSON.stringify(payload));
     await this.webhook.send(payload);
+    console.log('send message');
     core.debug('send message');
   }
 

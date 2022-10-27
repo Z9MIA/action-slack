@@ -1,10 +1,13 @@
 export interface Issue {
   title: string;
-  url: string;
+  html_url: string;
   state: string;
-  milestone: {
+  assignee?: {
+    login: string;
+  };
+  milestone?: {
     title: string;
     url: string;
   };
-  created_at: Date;
+  created_at: string;
 }
